@@ -34,8 +34,8 @@ cp env.example .env.local
 
 #### ب. تحديث القيم
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_actual_anon_key
+NEXT_PUBLIC_SUPABASE_URL=https://dqxxxzdxygysvonzortu.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxeHh4emR4eWd5c3ZvbnpvcnR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMwMzIwNTgsImV4cCI6MjA2ODYwODA1OH0.DPy9lhAmyoxKC4M_HWauGZc3W5pWjyZlNvvV-Y6_ioc
 ```
 
 ### 3. رفع الكود إلى GitHub
@@ -100,3 +100,63 @@ npm run build
 ---
 
 **🎉 الموقع جاهز للنشر مع Supabase! اتبع الخطوات أعلاه** 
+
+---
+
+## 1. عبر Supabase Dashboard (واجهة الويب)
+
+1. **ادخل إلى مشروعك في Supabase**  
+   [https://app.supabase.com/](https://app.supabase.com/)
+
+2. **من القائمة الجانبية اختر Table Editor**  
+   ستجد جميع الجداول التي أنشأتها (مثلاً: users, students, teachers ...).
+
+3. **اختر الجدول الذي تريد إضافة بيانات له**  
+   مثلاً: users
+
+4. **اضغط على Insert Row أو Add Row**  
+   ستظهر لك حقول الإدخال.
+
+5. **أدخل بيانات تجريبية**  
+   مثال لجدول users:
+   - email: test1@example.com
+   - password: student123 (أو حسب الحقل الموجود)
+   - name: طالب تجريبي
+   - role: student
+
+6. **اضغط Save أو Insert**
+
+كرر العملية لأي جدول آخر (students, teachers, ...).
+
+---
+
+## 2. عبر SQL (إدخال دفعة واحدة)
+
+يمكنك إدخال بيانات تجريبية عبر SQL Editor في Supabase:
+
+1. من لوحة التحكم، اختر SQL Editor.
+2. الصق الكود التالي (مثال لجدول users):
+
+```sql
+INSERT INTO users (email, password, name, role)
+VALUES
+  ('test1@example.com', 'student123', 'طالب تجريبي 1', 'student'),
+  ('test2@example.com', 'student123', 'طالب تجريبي 2', 'student'),
+  ('teacher1@example.com', 'teacher123', 'معلم تجريبي', 'teacher');
+```
+
+3. اضغط Run.
+
+> **ملاحظة:**  
+> غيّر أسماء الجداول والحقول حسب ما هو موجود فعليًا في قاعدة بياناتك (راجع ملف `supabase-schema.sql` إذا لم تكن متأكدًا).
+
+---
+
+## 3. مثال عملي (حسب جداولك)
+
+إذا أرسلت لي أسماء الجداول والحقول الموجودة عندك (أو صورة من Table Editor)، يمكنني تجهيز لك كود SQL جاهز للنسخ واللصق مباشرة.
+
+---
+
+### هل تريدني أن أجهز لك كود SQL لبيانات تجريبية بناءً على جداولك؟  
+إذا نعم، أرسل لي أسماء الجداول والحقول أو صورة من Table Editor، أو أرسل لي محتوى ملف `supabase-schema.sql` لأجهز لك البيانات التجريبية المناسبة! 
