@@ -58,7 +58,7 @@ export default function Navigation() {
               </div>
             </div>
             <span
-              className="brand-text text-sm sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-black group-hover:text-yellow-600 transition-colors duration-300"
+              className="brand-text text-xs sm:text-base md:text-lg lg:text-xl xl:text-2xl font-black group-hover:text-yellow-600 transition-colors duration-300"
               style={{ 
                 fontWeight: 900,
                 textShadow: '0 8px 32px #000000cc, 0 4px 16px #00000099, 0 2px 8px #00000066, 0 1px 2px #00000044',
@@ -99,9 +99,13 @@ export default function Navigation() {
             <div className="flex items-center space-x-4">
               {user ? (
                 <>
-                  <span className="text-sm font-semibold text-[#5a2600]">
+                  <button
+                    onClick={() => window.location.href = '/dashboard'}
+                    className="text-sm font-semibold text-[#5a2600] underline hover:text-green-700 transition cursor-pointer bg-transparent border-none p-0 m-0"
+                    style={{ background: 'none' }}
+                  >
                     Welcome, {user.name}!
-                  </span>
+                  </button>
                   <button
                     onClick={() => {
                       logout();
@@ -125,7 +129,7 @@ export default function Navigation() {
               </a>
             <a
               href="/contact"
-              className="block w-fit bg-white text-amber-600 px-6 py-2 text-base rounded-full font-bold border border-[#8B4513] transition-all duration-200 shadow hover:bg-[#ffb300] hover:text-white"
+              className="block w-fit bg-white text-amber-600 px-5 py-2 text-sm rounded-xl font-bold border border-[#8B4513] transition-all duration-200 shadow hover:bg-[#ffb300] hover:text-white"
               style={{ borderWidth: '1.2px', boxShadow: '0 6px 24px #000b', fontFamily: 'Noto Serif', fontWeight: 900, letterSpacing: '1.2px' }}
             >
                     Get Started
