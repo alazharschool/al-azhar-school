@@ -9,6 +9,7 @@
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",
+    "vercel-build": "next build",
     "deploy": "npm run build && echo '✅ تم البناء بنجاح! الآن ارفع الكود إلى GitHub وانتقل إلى vercel.com'",
     "deploy:vercel": "vercel --prod",
     "deploy:netlify": "npm run build && netlify deploy --prod --dir=.next"
