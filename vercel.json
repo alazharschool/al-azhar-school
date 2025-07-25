@@ -6,25 +6,10 @@
       "use": "@vercel/next"
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/(.*)",
-      "destination": "/"
+      "src": "/(.*)",
+      "dest": "/"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "functions": {
-    "app/blog/arabic-language/page.tsx": {
-      "maxDuration": 30
-    }
-  },
-  "regions": ["iad1"],
-  "public": true,
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "github": {
-    "silent": false
-  }
+  ]
 } 
