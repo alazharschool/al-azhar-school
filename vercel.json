@@ -14,5 +14,12 @@
   ],
   "env": {
     "NODE_ENV": "production"
-  }
+  },
+  "functions": {
+    "app/blog/arabic-language/page.tsx": {
+      "maxDuration": 30
+    }
+  },
+  "regions": ["iad1"],
+  "public": true
 } 
