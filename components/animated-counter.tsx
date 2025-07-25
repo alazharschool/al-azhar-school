@@ -31,7 +31,7 @@ export function AnimatedCounter({ value, suffix = "", className = "" }: Animated
   return (
     <div ref={ref} className={className} style={{ display: 'flex', gap: '2px', justifyContent: 'center' }}>
       {displayCount
-        .toLocaleString()
+        .toLocaleString('en-US')
         .replace(/,/g, '')
         .padStart(value.toString().length, '0')
         .split('')

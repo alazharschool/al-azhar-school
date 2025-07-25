@@ -136,7 +136,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
       // Create user record in database
       if (authData.user) {
         await supabaseAPI.createUser({
-          id: authData.user.id,
           email: userData.email,
           name: userData.name,
           user_type: userData.userType,
@@ -151,6 +150,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Registration error:', error);
+      try { console.error('Registration error (stringified):', JSON.stringify(error)); } catch(e) {}
       throw error;
     } finally {
       setLoading(false);

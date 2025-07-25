@@ -1,502 +1,234 @@
 "use client";
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Mail, Lock, User, Phone, BookOpen, GraduationCap, Globe } from "lucide-react";
-import { FadeInSection } from "@/components/fade-in-section";
-import { AnimatedButton } from "@/components/animated-button";
-import { ShimmerBackground } from "@/components/shimmer-background";
-import { useState } from "react";
-import Link from "next/link";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useRouter } from "next/navigation";
-
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const [userType, setUserType] = useState<"student" | "teacher">("student");
-  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
     email: "",
-    phone: "",
     password: "",
     confirmPassword: "",
+    fullName: "",
+    phone: "",
     country: "",
     age: "",
-    experience: ""
+    preferredTime: "",
+    notes: ""
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const router = useRouter();
 
-  const validateForm = () => {
-    if (!formData.firstName.trim()) {
-      alert("First name is required");
-      return false;
-    }
-    if (!formData.lastName.trim()) {
-      alert("Last name is required");
-      return false;
-    }
-    if (!formData.email.trim()) {
-      alert("Email is required");
-      return false;
-    }
-    if (!formData.email.includes("@")) {
-      alert("Please enter a valid email address");
-      return false;
-    }
-    if (!formData.phone.trim()) {
-      alert("Phone number is required");
-      return false;
-    }
-    if (!formData.country) {
-      alert("Please select your country");
-      return false;
-    }
-    if (!formData.age || parseInt(formData.age) < 6) {
-      alert("Please enter a valid age (minimum 6 years)");
-      return false;
-    }
-    if (userType === "teacher" && (!formData.experience || parseInt(formData.experience) < 1)) {
-      alert("Please enter your teaching experience (minimum 1 year)");
-      return false;
-    }
-    
-    // For students, use standard password
-    if (userType === "student") {
-      if (formData.password !== "student123") {
-        alert("For students, please use the standard password: student123");
-        return false;
-      }
-    } else {
-      // For teachers, validate custom password
-      if (!formData.password) {
-        alert("Password is required");
-        return false;
-      }
-      if (formData.password.length < 6) {
-        alert("Password must be at least 6 characters long");
-        return false;
-      }
-      if (formData.password !== formData.confirmPassword) {
-        alert("Passwords do not match");
-        return false;
-      }
-    }
-    return true;
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSelectChange = (name, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
+    setLoading(true);
+    setError("");
+    setSuccess("");
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      setLoading(false);
       return;
     }
-
-    setIsLoading(true);
-    
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters");
+      setLoading(false);
+      return;
+    }
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Success message
-      alert(`Welcome ${formData.firstName}! Your account has been created successfully.`);
-      
-      // Redirect to dashboard after successful registration
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            full_name: formData.fullName,
+            phone: formData.phone,
+            country: formData.country,
+            age: formData.age,
+            preferred_time: formData.preferredTime,
+            notes: formData.notes,
+            role: 'student'
+          }
+        }
+      });
+      if (authError) throw authError;
+      await supabase
+        .from('students')
+        .insert([
+          {
+            id: authData.user.id,
+            full_name: formData.fullName,
+            email: formData.email,
+            phone: formData.phone,
+            country: formData.country,
+            age: parseInt(formData.age),
+            preferred_time: formData.preferredTime,
+            notes: formData.notes,
+            status: 'pending',
+            monthly_fees: 0,
+            assigned_teacher: null
+          }
+        ]);
+      setSuccess("Registration successful! Your request will be reviewed by administration.");
       setTimeout(() => {
-        router.push("/dashboard");
-      }, 1500);
-      
+        router.push('/login');
+      }, 3000);
     } catch (error) {
-      alert("Registration failed. Please try again.");
+      setError(error.message || "An error occurred during registration");
     } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleInputChange = (field: string, value: string) => {
-    if (userType === "student" && field === "password") {
-      // For students, always set password to student123
-      setFormData(prev => ({ ...prev, password: "student123", confirmPassword: "student123" }));
-    } else {
-      setFormData(prev => ({ ...prev, [field]: value }));
-    }
-  };
-
-  const isFormValid = () => {
-    const basicValidation = (
-      formData.firstName.trim() &&
-      formData.lastName.trim() &&
-      formData.email.trim() &&
-      formData.email.includes("@") &&
-      formData.phone.trim() &&
-      formData.country &&
-      formData.age &&
-      parseInt(formData.age) >= 6 &&
-      (userType !== "teacher" || (formData.experience && parseInt(formData.experience) >= 1))
-    );
-
-    if (userType === "student") {
-      return basicValidation && formData.password === "student123";
-    } else {
-      return basicValidation && 
-             formData.password && 
-             formData.password.length >= 6 && 
-             formData.password === formData.confirmPassword;
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="py-20 px-4 relative overflow-hidden">
-        <ShimmerBackground />
-        <div className="max-w-6xl mx-auto text-center relative z-10">
-          <FadeInSection>
-            <div
-              className="content-overlay max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl"
-              style={{
-                border: '4px solid #8B4513',
-                boxShadow: '0 8px 32px #8B451344',
-                borderRadius: '2rem'
-              }}
-            >
-              <h1 className="text-3xl md:text-4xl font-black text-[#5a2600] mb-4 text-center" style={{ fontFamily: 'Noto Serif', fontWeight: 900 }}>
-                Join Our Community
-              </h1>
-              <p className="text-lg text-[#8b4513] font-semibold mb-8" style={{ fontFamily: "Noto Serif", fontWeight: 600 }}>
-                Start your Islamic education journey with Al-Azhar School
-              </p>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
+      <Card className="w-full max-w-2xl">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl font-bold text-green-800 mb-2">
+            Register at Al-Azhar School
+          </CardTitle>
+          <CardDescription className="text-lg text-gray-600">
+            Join our educational community and start your learning journey
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <Alert className="mb-4 border-red-200 bg-red-50">
+              <AlertDescription className="text-red-800">{error}</AlertDescription>
+            </Alert>
+          )}
+          {success && (
+            <Alert className="mb-4 border-green-200 bg-green-50">
+              <AlertDescription className="text-green-800">{success}</AlertDescription>
+            </Alert>
+          )}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Account Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-green-700 border-b pb-2">Account Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="email">Email Address *</Label>
+                  <Input id="email" name="email" type="email" required value={formData.email} onChange={handleInputChange} placeholder="example@email.com" />
+                </div>
+                <div>
+                  <Label htmlFor="fullName">Full Name *</Label>
+                  <Input id="fullName" name="fullName" type="text" required value={formData.fullName} onChange={handleInputChange} placeholder="Full Name" />
+                </div>
+                <div>
+                  <Label htmlFor="password">Password *</Label>
+                  <Input id="password" name="password" type="password" required value={formData.password} onChange={handleInputChange} placeholder="At least 6 characters" />
+                </div>
+                <div>
+                  <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                  <Input id="confirmPassword" name="confirmPassword" type="password" required value={formData.confirmPassword} onChange={handleInputChange} placeholder="Re-enter password" />
+                </div>
+              </div>
             </div>
-          </FadeInSection>
-        </div>
-      </section>
-
-      {/* Registration Form */}
-      <section className="py-16 px-4">
-        <div className="max-w-2xl mx-auto">
-          <FadeInSection>
-            <Card className="enhanced-card rounded-3xl shadow-lg hover:shadow-2xl hover:shadow-amber-500/20 transition-all duration-500">
-              <CardHeader className="text-center pb-8">
-                <CardTitle className="text-2xl font-bold text-gray-900 flex items-center justify-center">
-                  <User className="w-8 h-8 text-amber-600 mr-3" />
-                  Create Account
-                </CardTitle>
-                <CardDescription className="text-sm text-gray-600">
-                  Fill in your details to get started
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* User Type Selection */}
-                <div className="flex gap-4 mb-6">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setUserType("student");
-                      // Reset password fields for students
-                      setFormData(prev => ({ ...prev, password: "student123", confirmPassword: "student123" }));
-                    }}
-                    className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all duration-300 ${
-                      userType === "student"
-                        ? "border-amber-500 bg-amber-50 text-amber-700"
-                        : "border-gray-200 hover:border-amber-300"
-                    }`}
-                  >
-                    <GraduationCap className="w-5 h-5" />
-                    <span className="font-semibold">Student</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setUserType("teacher");
-                      // Clear password fields for teachers
-                      setFormData(prev => ({ ...prev, password: "", confirmPassword: "" }));
-                    }}
-                    className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all duration-300 ${
-                      userType === "teacher"
-                        ? "border-amber-500 bg-amber-50 text-amber-700"
-                        : "border-gray-200 hover:border-amber-300"
-                    }`}
-                  >
-                    <BookOpen className="w-5 h-5" />
-                    <span className="font-semibold">Teacher</span>
-                  </button>
+            {/* Student Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-green-700 border-b pb-2">Student Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="age">Age *</Label>
+                  <Input id="age" name="age" type="number" required min="3" max="100" value={formData.age} onChange={handleInputChange} placeholder="Age" />
                 </div>
-
-                {/* Password Information for Students */}
-                {userType === "student" && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-                    <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
-                      <Lock className="w-4 h-4" />
-                      Student Password Information:
-                    </h4>
-                    <div className="text-sm text-blue-700 space-y-2">
-                      <p><strong>Standard Password:</strong> <code className="bg-blue-100 px-2 py-1 rounded">student123</code></p>
-                      <p className="text-xs text-blue-600">
-                        All students use the same password for simplicity. Each student has a unique email address.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Name Fields */}
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName" className="text-gray-700 font-semibold">First Name</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <Input
-                          id="firstName"
-                          placeholder="Enter your first name"
-                          className="pl-10 border-2 border-amber-200 focus:border-amber-400 rounded-xl hover:shadow-md transition-all duration-300"
-                          value={formData.firstName}
-                          onChange={e => handleInputChange("firstName", e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName" className="text-gray-700 font-semibold">Last Name</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <Input
-                          id="lastName"
-                          placeholder="Enter your last name"
-                          className="pl-10 border-2 border-amber-200 focus:border-amber-400 rounded-xl hover:shadow-md transition-all duration-300"
-                          value={formData.lastName}
-                          onChange={e => handleInputChange("lastName", e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Contact Fields */}
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-gray-700 font-semibold">Email Address</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <Input
-                          id="email"
-                          type="email"
-                          placeholder="Enter your email"
-                          className="pl-10 border-2 border-amber-200 focus:border-amber-400 rounded-xl hover:shadow-md transition-all duration-300"
-                          value={formData.email}
-                          onChange={e => handleInputChange("email", e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-gray-700 font-semibold">Phone Number</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <Input
-                          id="phone"
-                          type="tel"
-                          placeholder="Enter your phone number"
-                          className="pl-10 border-2 border-amber-200 focus:border-amber-400 rounded-xl hover:shadow-md transition-all duration-300"
-                          value={formData.phone}
-                          onChange={e => handleInputChange("phone", e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Additional Fields */}
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="country" className="text-gray-700 font-semibold">Country</Label>
-                      <div className="relative">
-                        <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <Select value={formData.country} onValueChange={(value) => handleInputChange("country", value)}>
-                          <SelectTrigger className="pl-10 border-2 border-amber-200 focus:border-amber-400 rounded-xl hover:shadow-md transition-all duration-300">
-                            <SelectValue placeholder="Select your country" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="egypt">Egypt</SelectItem>
-                            <SelectItem value="usa">United States</SelectItem>
-                            <SelectItem value="uk">United Kingdom</SelectItem>
-                            <SelectItem value="canada">Canada</SelectItem>
-                            <SelectItem value="australia">Australia</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="age" className="text-gray-700 font-semibold">Age</Label>
-                      <Input
-                        id="age"
-                        type="number"
-                        placeholder="Enter your age"
-                        className="border-2 border-amber-200 focus:border-amber-400 rounded-xl hover:shadow-md transition-all duration-300"
-                        value={formData.age}
-                        onChange={e => handleInputChange("age", e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Teacher-specific fields */}
-                  {userType === "teacher" && (
-                    <div className="space-y-2">
-                      <Label htmlFor="experience" className="text-gray-700 font-semibold">Teaching Experience (Years)</Label>
-                      <Input
-                        id="experience"
-                        type="number"
-                        placeholder="Enter your teaching experience"
-                        className="border-2 border-amber-200 focus:border-amber-400 rounded-xl hover:shadow-md transition-all duration-300"
-                        value={formData.experience}
-                        onChange={e => handleInputChange("experience", e.target.value)}
-                        required
-                      />
-                    </div>
-                  )}
-
-                  {/* Password Fields */}
-                  {userType === "student" ? (
-                    <div className="space-y-2">
-                      <Label htmlFor="password" className="text-gray-700 font-semibold">Password (Standard for Students)</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <Input
-                          id="password"
-                          type="password"
-                          placeholder="student123 (pre-filled)"
-                          className="pl-10 border-2 border-blue-200 focus:border-blue-400 rounded-xl hover:shadow-md transition-all duration-300 bg-blue-50"
-                          value="student123"
-                          readOnly
-                        />
-                      </div>
-                      <p className="text-xs text-blue-600">
-                        Standard password for all students. Cannot be changed.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="password" className="text-gray-700 font-semibold">Password</Label>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                          <Input
-                            id="password"
-                            type="password"
-                            placeholder="Enter your password"
-                            className="pl-10 border-2 border-amber-200 focus:border-amber-400 rounded-xl hover:shadow-md transition-all duration-300"
-                            value={formData.password}
-                            onChange={e => handleInputChange("password", e.target.value)}
-                            required
-                          />
-                        </div>
-                        {formData.password && (
-                          <div className="flex gap-1 mt-1">
-                            <div className={`h-1 flex-1 rounded ${
-                              formData.password.length >= 6 ? "bg-green-500" : "bg-gray-300"
-                            }`}></div>
-                            <div className={`h-1 flex-1 rounded ${
-                              formData.password.length >= 8 ? "bg-green-500" : "bg-gray-300"
-                            }`}></div>
-                            <div className={`h-1 flex-1 rounded ${
-                              /[A-Z]/.test(formData.password) ? "bg-green-500" : "bg-gray-300"
-                            }`}></div>
-                            <div className={`h-1 flex-1 rounded ${
-                              /[0-9]/.test(formData.password) ? "bg-green-500" : "bg-gray-300"
-                            }`}></div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="confirmPassword" className="text-gray-700 font-semibold">Confirm Password</Label>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                          <Input
-                            id="confirmPassword"
-                            type="password"
-                            placeholder="Confirm your password"
-                            className={`pl-10 border-2 rounded-xl hover:shadow-md transition-all duration-300 ${
-                              formData.confirmPassword && formData.password !== formData.confirmPassword
-                                ? "border-red-400 focus:border-red-500"
-                                : "border-amber-200 focus:border-amber-400"
-                            }`}
-                            value={formData.confirmPassword}
-                            onChange={e => handleInputChange("confirmPassword", e.target.value)}
-                            required
-                          />
-                        </div>
-                        {formData.confirmPassword && (
-                          <p className={`text-xs ${
-                            formData.password === formData.confirmPassword 
-                              ? "text-green-600" 
-                              : "text-red-600"
-                          }`}>
-                            {formData.password === formData.confirmPassword 
-                              ? "✓ Passwords match" 
-                              : "✗ Passwords do not match"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" className="rounded border-gray-300 text-amber-600 focus:ring-amber-500" required />
-                    <span className="text-sm text-gray-600">
-                      I agree to the{" "}
-                      <Link href="/terms" className="text-amber-600 hover:text-amber-700 font-semibold">
-                        Terms of Service
-                      </Link>{" "}
-                      and{" "}
-                      <Link href="/privacy" className="text-amber-600 hover:text-amber-700 font-semibold">
-                        Privacy Policy
-                      </Link>
-                    </span>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isLoading || !isFormValid()}
-                    className={`w-full py-3 text-lg rounded-xl font-bold transition-all duration-300 ${
-                      isLoading 
-                        ? "bg-gray-400 cursor-not-allowed text-gray-600" 
-                        : !isFormValid()
-                        ? "bg-gray-300 cursor-not-allowed text-gray-500"
-                        : "bg-amber-600 hover:bg-amber-700 text-white"
-                    }`}
-                  >
-                    {isLoading ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        Creating Account...
-                      </div>
-                    ) : (
-                      "Create Account"
-                    )}
-                  </button>
-                </form>
-
-                <div className="text-center">
-                  <p className="text-sm text-gray-600">
-                    Already have an account?{" "}
-                    <Link href="/login" className="text-amber-600 hover:text-amber-700 font-semibold">
-                      Sign in here
-                    </Link>
-                  </p>
+                <div>
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleInputChange} placeholder="Phone Number" />
                 </div>
-              </CardContent>
-            </Card>
-          </FadeInSection>
-        </div>
-      </section>
+                <div>
+                  <Label htmlFor="country">Country *</Label>
+                  <Select value={formData.country} onValueChange={(value) => handleSelectChange('country', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Country/State" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="United States">United States</SelectItem>
+                      <SelectItem value="United Kingdom">United Kingdom</SelectItem>
+                      <SelectItem value="Australia">Australia</SelectItem>
+                      <SelectItem value="Egypt">Egypt</SelectItem>
+                      <SelectItem value="Saudi Arabia">Saudi Arabia</SelectItem>
+                      <SelectItem value="UAE">UAE</SelectItem>
+                      <SelectItem value="Qatar">Qatar</SelectItem>
+                      <SelectItem value="Bahrain">Bahrain</SelectItem>
+                      <SelectItem value="California">California</SelectItem>
+                      <SelectItem value="Ohio">Ohio</SelectItem>
+                      <SelectItem value="Philadelphia">Philadelphia</SelectItem>
+                      <SelectItem value="Pennsylvania">Pennsylvania</SelectItem>
+                      <SelectItem value="New Jersey">New Jersey</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            {/* Study Preferences */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-green-700 border-b pb-2">Study Preferences</h3>
+              <div>
+                <Label htmlFor="preferredTime">Preferred Study Time</Label>
+                <Select value={formData.preferredTime} onValueChange={(value) => handleSelectChange('preferredTime', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select preferred time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Morning">Morning</SelectItem>
+                    <SelectItem value="Afternoon">Afternoon</SelectItem>
+                    <SelectItem value="Evening">Evening</SelectItem>
+                    <SelectItem value="Night">Night</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="notes">Additional Notes</Label>
+                <textarea
+                  id="notes"
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleInputChange}
+                  placeholder="Any additional notes or special requirements..."
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  rows={3}
+                />
+              </div>
+            </div>
+            {/* Register Button */}
+            <div className="flex flex-col space-y-4">
+              <Button type="submit" disabled={loading} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 text-lg">
+                {loading ? "Registering..." : "Register Student"}
+              </Button>
+              <div className="text-center">
+                <span className="text-gray-600">Already have an account? </span>
+                <Link href="/login" className="text-green-600 hover:text-green-700 font-semibold">
+                  Login
+                </Link>
+              </div>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 } 
