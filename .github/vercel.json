@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "al-azhar-school",
+  "name": "alazhar-school-website",
   "builds": [
     {
       "src": "package.json",
