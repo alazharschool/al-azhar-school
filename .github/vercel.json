@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "alazhar-school-online-platform",
+  "name": "alazhar-school-app-2025",
   "builds": [
     {
       "src": "package.json",
